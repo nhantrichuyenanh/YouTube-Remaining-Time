@@ -1,0 +1,35 @@
+{
+  "manifest_version": 2,
+  "version": "0.0.1",
+  "name": "YouTube™ Remaining Time",
+  "description": "Does what it says on the tin, with playback rate adjusted and multiple time formats available.",
+  "author": "Nhân Trí",
+  "homepage_url": "https://linktr.ee/nhantrichuyenanh",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "96": "icons/icon96.png",
+    "128": "icons/icon128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.youtube.com/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "permissions": [
+    "storage",
+    "activeTab",
+    "https://www.youtube.com/watch?v=*"
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "strict_min_version": "58.0"
+    }
+  }
+}
