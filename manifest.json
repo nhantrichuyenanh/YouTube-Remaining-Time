@@ -1,8 +1,8 @@
 {
-  "manifest_version": 2,
-  "version": "0.0.1",
+  "manifest_version": 3,
+  "version": "1.0.1",
   "name": "YouTube™ Remaining Time",
-  "description": "Does what it says on the tin, with playback rate adjusted and multiple time formats available.",
+  "description": "Does what it says on the tin, with SponsorBlock supported, playback rate adjusted and multiple time formats available.",
   "author": "Nhân Trí",
   "homepage_url": "https://linktr.ee/nhantrichuyenanh",
   "icons": {
@@ -24,12 +24,20 @@
   ],
   "permissions": [
     "storage",
-    "activeTab",
-    "https://www.youtube.com/watch?v=*"
+    "activeTab"
+  ],
+  "host_permissions": [
+    "https://www.youtube.com/watch?v=*",
+    "https://sponsor.ajay.app/api/*"
   ],
   "browser_specific_settings": {
     "gecko": {
-      "strict_min_version": "58.0"
+      "id": "{3f51429e-c07e-4929-9fd8-b642001fbd41}",
+      "strict_min_version": "109.0"
     }
+  },
+    "options_ui": {
+    "page": "options/options.html",
+    "open_in_tab": false
   }
 }
