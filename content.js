@@ -1,16 +1,16 @@
 const TIME_MODES = {
-  ENDS_AT_24: 'endsAt24h', // HH:MM
-  ENDS_AT_12: 'endsAt12h', // HH:MM AM/PM
-  REMAINING: 'endsIn', // HH:MM:SS
-  PROGRESS: 'progress', // %
-  PROGRESS_BAR: 'progressBar' // █████░░░░░
+  ENDS_AT_24: 'endsAt24h',      // HH:MM
+  ENDS_AT_12: 'endsAt12h',      // HH:MM AM/PM
+  REMAINING: 'endsIn',          // HH:MM:SS
+  PROGRESS: 'progress',         // %
+  PROGRESS_BAR: 'progressBar'   // █████░░░░░
 };
 
 let currentDisplayMode = TIME_MODES.REMAINING;
 let state = {
   options: {
     allowedModes: {
-      endsAt24h: true,
+      endsAt24h: false,
       endsAt12h: true,
       endsIn: true,
       progress: true,
@@ -18,6 +18,7 @@ let state = {
     },
     pbrEnabled: true,
     sbEnabled: true,
+    totalSegments: 10,
     progressBarRemaining: "░",
     progressBarPassed: "█",
     // simple (default/trailing) / nonTrailing / gradient
@@ -28,7 +29,7 @@ let state = {
 };
 
 browser.storage.local.get([
-  'allowedModes', 'displayMode', 'pbrEnabled', 'sbEnabled',
+  'allowedModes', 'displayMode', 'pbrEnabled', 'sbEnabled', 'totalSegments',
   'progressBarRemaining', 'progressBarPassed', 'gradientSymbol',
   'progressBarVariant', 'progressBarNonTrailing', 'progressBarGradient'
 ]).then(result => {
@@ -242,7 +243,7 @@ function updateCustomTimeLabel() {
       break;
     }
     case TIME_MODES.PROGRESS_BAR: {
-      const totalSegments = 10;
+      const totalSegments = state.options.totalSegments || 10;
       if(state.options.progressBarVariant === "nonTrailing"){
         const segmentsForMarker = totalSegments - 1;
         const passedSegments = Math.floor((currentTime / effectiveDuration) * segmentsForMarker);
@@ -326,6 +327,10 @@ browser.storage.onChanged.addListener((changes, area) => {
       if (!state.options.sbEnabled) {
         sponsorBlock = null;
       }
+      updated = true;
+    }
+    if (changes.totalSegments) {
+      state.options.totalSegments = changes.totalSegments.newValue;
       updated = true;
     }
     if (changes.progressBarRemaining) {

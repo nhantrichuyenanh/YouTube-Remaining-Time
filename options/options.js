@@ -8,10 +8,10 @@ const DEFAULT_OPTIONS = {
   },
   pbrEnabled: true,
   sbEnabled: true,
+  totalSegments: 10,
   progressBarRemaining: "░",
   progressBarPassed: "█",
   gradientSymbol: "▒",
-  // simple (default/trailing) / nonTrailing / gradient
   progressBarVariant: "simple",
   progressBarNonTrailing: false,
   progressBarGradient: false
@@ -25,17 +25,19 @@ const elements = {
   modeProgressBar: document.getElementById('modeProgressBar'),
   pbrEnabled: document.getElementById('pbrEnabled'),
   sbEnabled: document.getElementById('sbEnabled'),
+  totalSegments: document.getElementById('totalSegments'),
+  totalSegmentsValue: document.getElementById('totalSegmentsValue'),
   progressBarRemaining: document.getElementById('progressBarRemaining'),
   progressBarPassed: document.getElementById('progressBarPassed'),
   gradientSymbol: document.getElementById('gradientSymbol'),
-  progressBarNonTrailing: document.getElementById('progressBarNonTrailing'),
+  progressBarSimple: document.getElementById('progressBarSimple'),
   progressBarGradient: document.getElementById('progressBarGradient'),
+  progressBarNonTrailing: document.getElementById('progressBarNonTrailing'),
   status: document.getElementById('status')
 };
 
 function ensureOneDisplayModeEnabled(checkbox) {
   if (checkbox.checked) return true;
-  
   const enabledCount = [
     elements.modeEndsAt24h,
     elements.modeEndsAt12h,
@@ -43,9 +45,8 @@ function ensureOneDisplayModeEnabled(checkbox) {
     elements.modeProgress,
     elements.modeProgressBar
   ].filter(cb => cb.checked).length;
-  
   if (enabledCount < 1) {
-    showStatus('At least one time format must be enabled', true);
+    showStatus('At least one time format must be enabled!', true);
     checkbox.checked = true;
     return false;
   }
@@ -54,10 +55,12 @@ function ensureOneDisplayModeEnabled(checkbox) {
 
 function saveOptions() {
   let variant = "simple";
-  if (elements.progressBarNonTrailing.checked) {
-    variant = "nonTrailing";
+  if (elements.progressBarSimple.checked) {
+    variant = "simple";
   } else if (elements.progressBarGradient.checked) {
     variant = "gradient";
+  } else if (elements.progressBarNonTrailing.checked) {
+    variant = "nonTrailing";
   }
   const options = {
     allowedModes: {
@@ -69,6 +72,7 @@ function saveOptions() {
     },
     pbrEnabled: elements.pbrEnabled.checked,
     sbEnabled: elements.sbEnabled.checked,
+    totalSegments: Number(elements.totalSegments.value),
     progressBarRemaining: elements.progressBarRemaining.value,
     progressBarPassed: elements.progressBarPassed.value,
     gradientSymbol: elements.gradientSymbol.value,
@@ -92,25 +96,29 @@ function loadOptions() {
     elements.modeProgressBar.checked = options.allowedModes.progressBar;
     elements.pbrEnabled.checked = options.pbrEnabled;
     elements.sbEnabled.checked = options.sbEnabled;
-    
+    elements.totalSegments.value = options.totalSegments;
+    elements.totalSegmentsValue.textContent = options.totalSegments;
     elements.progressBarRemaining.value = options.progressBarRemaining;
     elements.progressBarPassed.value = options.progressBarPassed;
     elements.gradientSymbol.value = options.gradientSymbol;
-    
-    if(options.progressBarVariant === "nonTrailing"){
+
+    if (options.progressBarVariant === "nonTrailing") {
       elements.progressBarNonTrailing.checked = true;
       elements.progressBarGradient.checked = false;
-    } else if(options.progressBarVariant === "gradient"){
+      elements.progressBarSimple.checked = false;
+    } else if (options.progressBarVariant === "gradient") {
       elements.progressBarNonTrailing.checked = false;
       elements.progressBarGradient.checked = true;
+      elements.progressBarSimple.checked = false;
     } else {
       elements.progressBarNonTrailing.checked = false;
       elements.progressBarGradient.checked = false;
+      elements.progressBarSimple.checked = true;
     }
-    
-    const anyModeEnabled = options.allowedModes.endsAt24h || 
-                           options.allowedModes.endsAt12h || 
-                           options.allowedModes.endsIn || 
+
+    const anyModeEnabled = options.allowedModes.endsAt24h ||
+                           options.allowedModes.endsAt12h ||
+                           options.allowedModes.endsIn ||
                            options.allowedModes.progress ||
                            options.allowedModes.progressBar;
     if (!anyModeEnabled) {
@@ -120,6 +128,28 @@ function loadOptions() {
   }, (error) => {
     console.error('Error loading options:', error);
   });
+}
+
+function enforceSingleVariant(changedElement) {
+  if (!elements.progressBarSimple.checked && 
+      !elements.progressBarGradient.checked && 
+      !elements.progressBarNonTrailing.checked) {
+    changedElement.checked = true;
+  } else {
+    if (changedElement === elements.progressBarSimple && changedElement.checked) {
+      elements.progressBarGradient.checked = false;
+      elements.progressBarNonTrailing.checked = false;
+    }
+    if (changedElement === elements.progressBarGradient && changedElement.checked) {
+      elements.progressBarSimple.checked = false;
+      elements.progressBarNonTrailing.checked = false;
+    }
+    if (changedElement === elements.progressBarNonTrailing && changedElement.checked) {
+      elements.progressBarSimple.checked = false;
+      elements.progressBarGradient.checked = false;
+    }
+  }
+  saveOptions();
 }
 
 function showStatus(message, isError = false) {
@@ -150,17 +180,14 @@ elements.modeProgressBar.addEventListener('change', function() {
   if (ensureOneDisplayModeEnabled(this)) saveOptions();
 });
 
-elements.progressBarNonTrailing.addEventListener('change', function() {
-  if (this.checked) {
-    elements.progressBarGradient.checked = false;
-  }
-  saveOptions();
+elements.progressBarSimple.addEventListener('change', function() {
+  enforceSingleVariant(this);
 });
 elements.progressBarGradient.addEventListener('change', function() {
-  if (this.checked) {
-    elements.progressBarNonTrailing.checked = false;
-  }
-  saveOptions();
+  enforceSingleVariant(this);
+});
+elements.progressBarNonTrailing.addEventListener('change', function() {
+  enforceSingleVariant(this);
 });
 
 elements.pbrEnabled.addEventListener('change', saveOptions);
@@ -168,3 +195,7 @@ elements.sbEnabled.addEventListener('change', saveOptions);
 elements.progressBarRemaining.addEventListener('change', saveOptions);
 elements.progressBarPassed.addEventListener('change', saveOptions);
 elements.gradientSymbol.addEventListener('change', saveOptions);
+elements.totalSegments.addEventListener('input', function() {
+  elements.totalSegmentsValue.textContent = elements.totalSegments.value;
+  saveOptions();
+});

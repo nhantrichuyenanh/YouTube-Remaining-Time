@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "version": "1.0.1",
+  "version": "1.0.3",
   "name": "YouTube™ Remaining Time",
   "description": "Does what it says on the tin, with SponsorBlock supported, playback rate adjusted and multiple time formats available.",
   "author": "Nhân Trí",
