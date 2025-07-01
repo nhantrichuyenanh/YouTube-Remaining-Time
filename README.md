@@ -36,9 +36,3 @@
 - **Progress Bar:** Choose between simple, non-trailing, or gradient variants. Customize symbols and segment count.
 - **SponsorBlock:** Toggle SponsorBlock integration on or off.
 - **Playback Rate:** Toggle playback rate awareness on or off.
-
-MIT License
-
----
-
-Made by [@nhantrichuyenanh](https://github.com/nhantrichuyenanh)
