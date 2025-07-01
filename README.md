@@ -9,9 +9,6 @@ Features
     - Several visual variants: simple, non-trailing marker, and gradient
     - Customizable symbols for passed, remaining, and gradient segments
     - Adjustable total segments for the progress bar
-- SponsorBlock Integration: automatically subtracts the duration of sponsored segments when calculating the remaining time
+- SponsorBlock Integration: automatically subtracts the duration of sponsored segments when calculating the remaining time if enabled
 - Playback Rate: remaining time is dynamically adjusted if you change playback speed
-- Fully Customizable:
-  - Choose which display modes appear and cycle between them with a click on the time label.
-  - Enable/disable SponsorBlock or playback rate integration.
-  - Tweak progress bar appearance from the options menu.
+- Choose which display modes appear and cycle between them with a click on the time label.
