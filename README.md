@@ -1,6 +1,4 @@
-# YouTube Remaining Time
-
-A browser extension that enhances the YouTube player by displaying a highly customizable remaining time indicator, including advanced features like SponsorBlock integration and various display formats.
+# YouTube™ Remaining Time
 
 ## Features
 
@@ -28,17 +26,6 @@ A browser extension that enhances the YouTube player by displaying a highly cust
   - Integrates directly into the YouTube player UI, appearing next to the default time display.
   - Supports both standard and live videos (automatically hides on live streams).
 
-## Installation
-
-Available on [Firefox Add-ons](https://addons.mozilla.org/firefox/addon/yt-remaining-time).
-
-## Usage
-
-1. Install the extension and open any YouTube video.
-2. A new time display will appear next to YouTube’s own time information.
-3. Click the custom time label to cycle through your enabled display modes.
-4. Right-click the extension icon and select "Options" to configure appearance, enabled modes, progress bar style, and integrations.
-
 ## Options
 
 - **Display Modes:** Enable or disable each of the following:
@@ -49,13 +36,6 @@ Available on [Firefox Add-ons](https://addons.mozilla.org/firefox/addon/yt-remai
 - **Progress Bar:** Choose between simple, non-trailing, or gradient variants. Customize symbols and segment count.
 - **SponsorBlock:** Toggle SponsorBlock integration on or off.
 - **Playback Rate:** Toggle playback rate awareness on or off.
-
-## Advanced
-
-- All settings are saved locally and applied immediately.
-- The extension is open source under the MIT License.
-
-## License
 
 MIT License
 
