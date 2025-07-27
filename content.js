@@ -28,6 +28,9 @@ let state = {
   }
 };
 
+// Add initialization state tracking
+let isInitialized = false;
+
 browser.storage.local.get([
   'allowedModes', 'displayMode', 'pbrEnabled', 'sbEnabled', 'totalSegments',
   'progressBarRemaining', 'progressBarPassed', 'gradientSymbol',
@@ -69,9 +72,10 @@ browser.storage.local.get([
     currentDisplayMode = allowedModes[0];
     browser.storage.local.set({ displayMode: currentDisplayMode });
   }
-  
-  createCustomTimeDisplay();
-  updateCustomTimeLabel();
+
+  // Mark as initialized and start the animation loop
+  isInitialized = true;
+  startAnimationLoop();
 });
 
 let sponsorBlock = null;
@@ -82,7 +86,7 @@ class SponsorBlock {
     this.isReady = false;
     this.initialize();
   }
-  
+
   async initialize() {
     const player = getPlayer();
     if (!player || !player.getVideoData) return;
@@ -103,7 +107,7 @@ class SponsorBlock {
       this.isReady = false;
     }
   }
-  
+
   getAdjustedDuration(originalDuration) {
     if (this.isReady) {
       return originalDuration - this.durationOffset;
@@ -113,8 +117,7 @@ class SponsorBlock {
 }
 
 function getPlayer() {
-  return document.getElementById('movie_player')?.wrappedJSObject ||
-         document.getElementById('movie_player');
+  return document.getElementById('movie_player')?.wrappedJSObject || document.getElementById('movie_player');
 }
 
 function getAllowedModes() {
@@ -296,11 +299,58 @@ function animationLoop() {
   window.requestAnimationFrame(animationLoop);
 }
 
-if (document.readyState === "complete") {
-  animationLoop();
-} else {
-  window.addEventListener("load", animationLoop);
+// enhanced initialization function
+function startAnimationLoop() {
+  if (!isInitialized) return;
+
+  // for pre-existing tabs, wait a bit longer for YouTube to be ready
+  const initDelay = document.readyState === "complete" ? 1000 : 0;
+
+  setTimeout(() => {
+    // check if we're on a watch page and YouTube player exists
+    if (location.pathname.startsWith("/watch")) {
+      const waitForPlayer = () => {
+        const player = getPlayer();
+        if (player) {
+          animationLoop();
+        } else {
+          setTimeout(waitForPlayer, 500);
+        }
+      };
+      waitForPlayer();
+    } else {
+      animationLoop();
+    }
+  }, initDelay);
 }
+
+// enhanced page load handling
+if (document.readyState === "complete") {
+  // for pre-existing tabs, only start if already initialized
+  if (isInitialized) {
+    startAnimationLoop();
+  }
+} else {
+  window.addEventListener("load", () => {
+    if (isInitialized) {
+      startAnimationLoop();
+    }
+  });
+}
+
+// handle navigation changes
+let lastUrl = location.href;
+const checkForUrlChange = () => {
+  if (location.href !== lastUrl) {
+    lastUrl = location.href;
+    // reset sponsorBlock when navigating to new video
+    if (location.pathname.startsWith("/watch")) {
+      sponsorBlock = null;
+    }
+  }
+};
+
+setInterval(checkForUrlChange, 1000);
 
 browser.storage.onChanged.addListener((changes, area) => {
   if (area === 'local') {

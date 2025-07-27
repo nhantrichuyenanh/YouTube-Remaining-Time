@@ -26,9 +26,7 @@
       padding: 20px;
       width: 90%;
       max-width: 600px;
-      height: auto;
-      max-height: 500px;
-      overflow-y: auto;
+      /* Removed max-height and overflow-y so only the browser scrollbar appears */
     }
 
     h1 {
@@ -225,7 +223,8 @@
       <div class="option-group">
         <div class="option-title">Time Format</div>
         <p class="group-subtext">
-          Checked time format(s) is(/are) made visible and unchecked one(s) invisible when clicking to shuffle it(/them) on a YouTube video.<br><br>
+          Checked time format(s) is(/are) made visible and unchecked one(s) invisible when clicking to shuffle it(/them)
+          on a YouTube video.<br><br>
           Let's say you're watching that very video currently at 2:34 / 10:00 at 4 in the afternoon.
           The following time formats will be shown as:
         </p>
@@ -327,10 +326,10 @@
         </div>
       </div>
     </div>
+
     <div class="status" id="status">Status Message Here</div>
     <div class="info">
-      Changes are saved automatically and will take effect immediately.<br>
-      Passed, Remaining, and Gradient will default to █, ▒, and ░ if input is empty.
+      Changes are saved automatically and will take effect immediately.
     </div>
   </div>
   <script src="options.js"></script>
