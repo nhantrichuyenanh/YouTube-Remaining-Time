@@ -21,62 +21,80 @@ let state = {
     totalSegments: 10,
     progressBarRemaining: "░",
     progressBarPassed: "█",
-    // simple (default/trailing) / nonTrailing / gradient
     progressBarVariant: "simple",
     progressBarNonTrailing: false,
     progressBarGradient: false
   }
 };
 
-// Add initialization state tracking
+// state tracking
 let isInitialized = false;
+let isAnimationRunning = false;
+let initializationRetries = 0;
+const MAX_INIT_RETRIES = 20;
 
-browser.storage.local.get([
-  'allowedModes', 'displayMode', 'pbrEnabled', 'sbEnabled', 'totalSegments',
-  'progressBarRemaining', 'progressBarPassed', 'gradientSymbol',
-  'progressBarVariant', 'progressBarNonTrailing', 'progressBarGradient'
-]).then(result => {
-  if (result.allowedModes) {
-    state.options.allowedModes = result.allowedModes;
-  }
-  if (result.pbrEnabled !== undefined) {
-    state.options.pbrEnabled = result.pbrEnabled;
-  }
-  if (result.sbEnabled !== undefined) {
-    state.options.sbEnabled = result.sbEnabled;
-  }
-  if (result.progressBarRemaining) {
-    state.options.progressBarRemaining = result.progressBarRemaining;
-  }
-  if (result.progressBarPassed) {
-    state.options.progressBarPassed = result.progressBarPassed;
-  }
-  if (result.gradientSymbol) {
-    state.options.gradientSymbol = result.gradientSymbol;
-  }
-  if (result.progressBarVariant) {
-    state.options.progressBarVariant = result.progressBarVariant;
-  }
-  if (result.progressBarNonTrailing !== undefined) {
-    state.options.progressBarNonTrailing = result.progressBarNonTrailing;
-  }
-  if (result.progressBarGradient !== undefined) {
-    state.options.progressBarGradient = result.progressBarGradient;
-  }
+// extension settings
+async function initializeExtension() {
+  try {
+    const result = await browser.storage.local.get([
+      'allowedModes', 'displayMode', 'pbrEnabled', 'sbEnabled', 'totalSegments',
+      'progressBarRemaining', 'progressBarPassed', 'gradientSymbol',
+      'progressBarVariant', 'progressBarNonTrailing', 'progressBarGradient'
+    ]);
 
-  const allowedModes = getAllowedModes();
+    // update state with stored options
+    if (result.allowedModes) {
+      state.options.allowedModes = result.allowedModes;
+    }
+    if (result.pbrEnabled !== undefined) {
+      state.options.pbrEnabled = result.pbrEnabled;
+    }
+    if (result.sbEnabled !== undefined) {
+      state.options.sbEnabled = result.sbEnabled;
+    }
+    if (result.progressBarRemaining) {
+      state.options.progressBarRemaining = result.progressBarRemaining;
+    }
+    if (result.progressBarPassed) {
+      state.options.progressBarPassed = result.progressBarPassed;
+    }
+    if (result.gradientSymbol) {
+      state.options.gradientSymbol = result.gradientSymbol;
+    }
+    if (result.progressBarVariant) {
+      state.options.progressBarVariant = result.progressBarVariant;
+    }
+    if (result.progressBarNonTrailing !== undefined) {
+      state.options.progressBarNonTrailing = result.progressBarNonTrailing;
+    }
+    if (result.progressBarGradient !== undefined) {
+      state.options.progressBarGradient = result.progressBarGradient;
+    }
 
-  if (result.displayMode && allowedModes.includes(result.displayMode)) {
-    currentDisplayMode = result.displayMode;
-  } else {
-    currentDisplayMode = allowedModes[0];
-    browser.storage.local.set({ displayMode: currentDisplayMode });
+    const allowedModes = getAllowedModes();
+
+    if (result.displayMode && allowedModes.includes(result.displayMode)) {
+      currentDisplayMode = result.displayMode;
+    } else {
+      currentDisplayMode = allowedModes[0];
+      browser.storage.local.set({ displayMode: currentDisplayMode });
+    }
+
+    isInitialized = true;
+    console.log('YouTube Remaining Time: Extension initialized');
+
+    // start the main loop
+    startMainLoop();
+
+  } catch (error) {
+    console.error('YouTube Remaining Time: Initialization error:', error);
+    // retry initialization
+    if (initializationRetries < MAX_INIT_RETRIES) {
+      initializationRetries++;
+      setTimeout(initializeExtension, 1000);
+    }
   }
-
-  // Mark as initialized and start the animation loop
-  isInitialized = true;
-  startAnimationLoop();
-});
+}
 
 let sponsorBlock = null;
 
@@ -120,6 +138,25 @@ function getPlayer() {
   return document.getElementById('movie_player')?.wrappedJSObject || document.getElementById('movie_player');
 }
 
+// YouTube page detection
+function isYouTubePage() {
+  return window.location.hostname === 'www.youtube.com';
+}
+
+function isWatchPage() {
+  return window.location.pathname.startsWith("/watch");
+}
+
+function canHaveVideoPlayer() {
+  const path = window.location.pathname;
+  return path.startsWith("/watch") ||
+         path.startsWith("/@") ||
+         path.includes("/channel/") ||
+         path === "/" ||
+         path.startsWith("/feed/") ||
+         path.startsWith("/playlist");
+}
+
 function getAllowedModes() {
   const allowed = state.options.allowedModes || {
     endsAt24h: true,
@@ -156,7 +193,7 @@ function createCustomTimeDisplay() {
   if (existingContainer) return;
 
   const baseTimeDisplay = document.querySelector("#movie_player .ytp-time-display");
-  if (!baseTimeDisplay) return; // exit if no time display exists
+  if (!baseTimeDisplay) return;
 
   const customContainer = baseTimeDisplay.cloneNode(false);
   customContainer.classList.remove("ytp-live");
@@ -252,7 +289,7 @@ function updateCustomTimeLabel() {
         const passedSegments = Math.floor((currentTime / effectiveDuration) * segmentsForMarker);
         const remainingSegments = segmentsForMarker - passedSegments;
         const leftPart = state.options.progressBarRemaining.repeat(passedSegments);
-        const marker = state.options.progressBarPassed; // marker symbol
+        const marker = state.options.progressBarPassed;
         const rightPart = state.options.progressBarRemaining.repeat(remainingSegments);
         customLabel.textContent = leftPart + marker + rightPart;
       } else if(state.options.progressBarVariant === "gradient"){
@@ -280,8 +317,8 @@ function updateCustomTimeLabel() {
               state.options.progressBarPassed.repeat(passedSegments) +
               state.options.progressBarRemaining.repeat(remainingSegments);
       }
-  break;
-}
+      break;
+    }
     default: {
       customLabel.textContent = "";
       break;
@@ -289,69 +326,93 @@ function updateCustomTimeLabel() {
   }
 }
 
-function animationLoop() {
-  if (location.pathname.startsWith("/watch")) {
-    if (!document.querySelector("#movie_player .customTimeContainer")) {
-      createCustomTimeDisplay();
-    }
-    updateCustomTimeLabel();
-  }
-  window.requestAnimationFrame(animationLoop);
-}
-
-// enhanced initialization function
-function startAnimationLoop() {
+// main animation loop
+function mainLoop() {
   if (!isInitialized) return;
 
-  // for pre-existing tabs, wait a bit longer for YouTube to be ready
-  const initDelay = document.readyState === "complete" ? 1000 : 0;
-
-  setTimeout(() => {
-    // check if we're on a watch page and YouTube player exists
-    if (location.pathname.startsWith("/watch")) {
-      const waitForPlayer = () => {
-        const player = getPlayer();
-        if (player) {
-          animationLoop();
-        } else {
-          setTimeout(waitForPlayer, 500);
-        }
-      };
-      waitForPlayer();
-    } else {
-      animationLoop();
+  // always check if we're on a YouTube page that could have videos
+  if (isYouTubePage() && canHaveVideoPlayer()) {
+    // only create/update display if we're on a watch page
+    if (isWatchPage()) {
+      if (!document.querySelector("#movie_player .customTimeContainer")) {
+        createCustomTimeDisplay();
+      }
+      updateCustomTimeLabel();
     }
-  }, initDelay);
+  }
+
+  // continue the loop
+  if (isAnimationRunning) {
+    window.requestAnimationFrame(mainLoop);
+  }
+}
+
+function startMainLoop() {
+  if (!isInitialized || isAnimationRunning) return;
+
+  isAnimationRunning = true;
+  console.log('YouTube Remaining Time: Starting main loop');
+
+  // use a small delay to ensure DOM is ready
+  setTimeout(() => {
+    mainLoop();
+  }, 100);
+}
+
+function stopMainLoop() {
+  isAnimationRunning = false;
+  console.log('YouTube Remaining Time: Stopping main loop');
+}
+
+// navigation detection
+let lastUrl = location.href;
+let lastPath = location.pathname;
+
+function handleNavigation() {
+  const currentUrl = location.href;
+  const currentPath = location.pathname;
+
+  if (currentUrl !== lastUrl || currentPath !== lastPath) {
+    console.log('YouTube Remaining Time: Navigation detected', currentPath);
+
+    // reset sponsorBlock when navigating to new video
+    if (isWatchPage() && currentPath !== lastPath) {
+      sponsorBlock = null;
+    }
+
+    // update tracking variables
+    lastUrl = currentUrl;
+    lastPath = currentPath;
+
+    // ensure main loop is running if we're on a valid page
+    if (isInitialized && canHaveVideoPlayer() && !isAnimationRunning) {
+      startMainLoop();
+    }
+  }
 }
 
 // enhanced page load handling
-if (document.readyState === "complete") {
-  // for pre-existing tabs, only start if already initialized
-  if (isInitialized) {
-    startAnimationLoop();
+function handlePageLoad() {
+  console.log('YouTube Remaining Time: Page load detected');
+
+  // initialize if not already done
+  if (!isInitialized) {
+    initializeExtension();
+  } else if (canHaveVideoPlayer() && !isAnimationRunning) {
+    startMainLoop();
   }
-} else {
-  window.addEventListener("load", () => {
-    if (isInitialized) {
-      startAnimationLoop();
-    }
-  });
 }
 
-// handle navigation changes
-let lastUrl = location.href;
-const checkForUrlChange = () => {
-  if (location.href !== lastUrl) {
-    lastUrl = location.href;
-    // reset sponsorBlock when navigating to new video
-    if (location.pathname.startsWith("/watch")) {
-      sponsorBlock = null;
-    }
-  }
-};
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', handlePageLoad);
+  document.addEventListener('load', handlePageLoad);
+} else {
+  setTimeout(handlePageLoad, 100);
+}
 
-setInterval(checkForUrlChange, 1000);
+setInterval(handleNavigation, 500);
 
+// listen for storage changes
 browser.storage.onChanged.addListener((changes, area) => {
   if (area === 'local') {
     let updated = false;
@@ -412,3 +473,15 @@ browser.storage.onChanged.addListener((changes, area) => {
     }
   }
 });
+
+// cleanup on page unload
+window.addEventListener('beforeunload', () => {
+  stopMainLoop();
+});
+
+setTimeout(() => {
+  if (!isInitialized) {
+    console.log('YouTube Remaining Time: Force initializing after delay');
+    initializeExtension();
+  }
+}, 2000);
