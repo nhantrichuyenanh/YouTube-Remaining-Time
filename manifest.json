@@ -11,18 +11,12 @@
   },
   "content_scripts": [
     {
-      "matches": [
-        "https://www.youtube.com/*"
-      ],
-      "js": [
-        "content.js"
-      ],
+      "matches": ["https://www.youtube.com/*"],
+      "js": ["content.js"],
       "run_at": "document_start"
     }
   ],
-  "permissions": [
-    "storage"
-  ],
+  "permissions": ["storage"],
   "host_permissions": [
     "https://www.youtube.com/watch*",
     "https://sponsor.ajay.app/api/*"
