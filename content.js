@@ -21,80 +21,58 @@ let state = {
     totalSegments: 10,
     progressBarRemaining: "░",
     progressBarPassed: "█",
+    // simple (default/trailing) / nonTrailing / gradient
     progressBarVariant: "simple",
     progressBarNonTrailing: false,
     progressBarGradient: false
   }
 };
 
-// state tracking
-let isInitialized = false;
-let isAnimationRunning = false;
-let initializationRetries = 0;
-const MAX_INIT_RETRIES = 20;
-
-// extension settings
-async function initializeExtension() {
-  try {
-    const result = await browser.storage.local.get([
-      'allowedModes', 'displayMode', 'pbrEnabled', 'sbEnabled', 'totalSegments',
-      'progressBarRemaining', 'progressBarPassed', 'gradientSymbol',
-      'progressBarVariant', 'progressBarNonTrailing', 'progressBarGradient'
-    ]);
-
-    // update state with stored options
-    if (result.allowedModes) {
-      state.options.allowedModes = result.allowedModes;
-    }
-    if (result.pbrEnabled !== undefined) {
-      state.options.pbrEnabled = result.pbrEnabled;
-    }
-    if (result.sbEnabled !== undefined) {
-      state.options.sbEnabled = result.sbEnabled;
-    }
-    if (result.progressBarRemaining) {
-      state.options.progressBarRemaining = result.progressBarRemaining;
-    }
-    if (result.progressBarPassed) {
-      state.options.progressBarPassed = result.progressBarPassed;
-    }
-    if (result.gradientSymbol) {
-      state.options.gradientSymbol = result.gradientSymbol;
-    }
-    if (result.progressBarVariant) {
-      state.options.progressBarVariant = result.progressBarVariant;
-    }
-    if (result.progressBarNonTrailing !== undefined) {
-      state.options.progressBarNonTrailing = result.progressBarNonTrailing;
-    }
-    if (result.progressBarGradient !== undefined) {
-      state.options.progressBarGradient = result.progressBarGradient;
-    }
-
-    const allowedModes = getAllowedModes();
-
-    if (result.displayMode && allowedModes.includes(result.displayMode)) {
-      currentDisplayMode = result.displayMode;
-    } else {
-      currentDisplayMode = allowedModes[0];
-      browser.storage.local.set({ displayMode: currentDisplayMode });
-    }
-
-    isInitialized = true;
-    console.log('YouTube Remaining Time: Extension initialized');
-
-    // start the main loop
-    startMainLoop();
-
-  } catch (error) {
-    console.error('YouTube Remaining Time: Initialization error:', error);
-    // retry initialization
-    if (initializationRetries < MAX_INIT_RETRIES) {
-      initializationRetries++;
-      setTimeout(initializeExtension, 1000);
-    }
+browser.storage.local.get([
+  'allowedModes', 'displayMode', 'pbrEnabled', 'sbEnabled', 'totalSegments',
+  'progressBarRemaining', 'progressBarPassed', 'gradientSymbol',
+  'progressBarVariant', 'progressBarNonTrailing', 'progressBarGradient'
+]).then(result => {
+  if (result.allowedModes) {
+    state.options.allowedModes = result.allowedModes;
   }
-}
+  if (result.pbrEnabled !== undefined) {
+    state.options.pbrEnabled = result.pbrEnabled;
+  }
+  if (result.sbEnabled !== undefined) {
+    state.options.sbEnabled = result.sbEnabled;
+  }
+  if (result.progressBarRemaining) {
+    state.options.progressBarRemaining = result.progressBarRemaining;
+  }
+  if (result.progressBarPassed) {
+    state.options.progressBarPassed = result.progressBarPassed;
+  }
+  if (result.gradientSymbol) {
+    state.options.gradientSymbol = result.gradientSymbol;
+  }
+  if (result.progressBarVariant) {
+    state.options.progressBarVariant = result.progressBarVariant;
+  }
+  if (result.progressBarNonTrailing !== undefined) {
+    state.options.progressBarNonTrailing = result.progressBarNonTrailing;
+  }
+  if (result.progressBarGradient !== undefined) {
+    state.options.progressBarGradient = result.progressBarGradient;
+  }
+
+  const allowedModes = getAllowedModes();
+
+  if (result.displayMode && allowedModes.includes(result.displayMode)) {
+    currentDisplayMode = result.displayMode;
+  } else {
+    currentDisplayMode = allowedModes[0];
+    browser.storage.local.set({ displayMode: currentDisplayMode });
+  }
+
+  createCustomTimeDisplay();
+  updateCustomTimeLabel();
+});
 
 let sponsorBlock = null;
 
@@ -135,26 +113,8 @@ class SponsorBlock {
 }
 
 function getPlayer() {
-  return document.getElementById('movie_player')?.wrappedJSObject || document.getElementById('movie_player');
-}
-
-// YouTube page detection
-function isYouTubePage() {
-  return window.location.hostname === 'www.youtube.com';
-}
-
-function isWatchPage() {
-  return window.location.pathname.startsWith("/watch");
-}
-
-function canHaveVideoPlayer() {
-  const path = window.location.pathname;
-  return path.startsWith("/watch") ||
-         path.startsWith("/@") ||
-         path.includes("/channel/") ||
-         path === "/" ||
-         path.startsWith("/feed/") ||
-         path.startsWith("/playlist");
+  return document.getElementById('movie_player')?.wrappedJSObject ||
+         document.getElementById('movie_player');
 }
 
 function getAllowedModes() {
@@ -193,7 +153,7 @@ function createCustomTimeDisplay() {
   if (existingContainer) return;
 
   const baseTimeDisplay = document.querySelector("#movie_player .ytp-time-display");
-  if (!baseTimeDisplay) return;
+  if (!baseTimeDisplay) return; // exit if no time display exists
 
   const customContainer = baseTimeDisplay.cloneNode(false);
   customContainer.classList.remove("ytp-live");
@@ -289,7 +249,7 @@ function updateCustomTimeLabel() {
         const passedSegments = Math.floor((currentTime / effectiveDuration) * segmentsForMarker);
         const remainingSegments = segmentsForMarker - passedSegments;
         const leftPart = state.options.progressBarRemaining.repeat(passedSegments);
-        const marker = state.options.progressBarPassed;
+        const marker = state.options.progressBarPassed; // marker symbol
         const rightPart = state.options.progressBarRemaining.repeat(remainingSegments);
         customLabel.textContent = leftPart + marker + rightPart;
       } else if(state.options.progressBarVariant === "gradient"){
@@ -317,8 +277,8 @@ function updateCustomTimeLabel() {
               state.options.progressBarPassed.repeat(passedSegments) +
               state.options.progressBarRemaining.repeat(remainingSegments);
       }
-      break;
-    }
+  break;
+}
     default: {
       customLabel.textContent = "";
       break;
@@ -326,93 +286,22 @@ function updateCustomTimeLabel() {
   }
 }
 
-// main animation loop
-function mainLoop() {
-  if (!isInitialized) return;
-
-  // always check if we're on a YouTube page that could have videos
-  if (isYouTubePage() && canHaveVideoPlayer()) {
-    // only create/update display if we're on a watch page
-    if (isWatchPage()) {
-      if (!document.querySelector("#movie_player .customTimeContainer")) {
-        createCustomTimeDisplay();
-      }
-      updateCustomTimeLabel();
+function animationLoop() {
+  if (location.pathname.startsWith("/watch")) {
+    if (!document.querySelector("#movie_player .customTimeContainer")) {
+      createCustomTimeDisplay();
     }
+    updateCustomTimeLabel();
   }
-
-  // continue the loop
-  if (isAnimationRunning) {
-    window.requestAnimationFrame(mainLoop);
-  }
+  window.requestAnimationFrame(animationLoop);
 }
 
-function startMainLoop() {
-  if (!isInitialized || isAnimationRunning) return;
-
-  isAnimationRunning = true;
-  console.log('YouTube Remaining Time: Starting main loop');
-
-  // use a small delay to ensure DOM is ready
-  setTimeout(() => {
-    mainLoop();
-  }, 100);
-}
-
-function stopMainLoop() {
-  isAnimationRunning = false;
-  console.log('YouTube Remaining Time: Stopping main loop');
-}
-
-// navigation detection
-let lastUrl = location.href;
-let lastPath = location.pathname;
-
-function handleNavigation() {
-  const currentUrl = location.href;
-  const currentPath = location.pathname;
-
-  if (currentUrl !== lastUrl || currentPath !== lastPath) {
-    console.log('YouTube Remaining Time: Navigation detected', currentPath);
-
-    // reset sponsorBlock when navigating to new video
-    if (isWatchPage() && currentPath !== lastPath) {
-      sponsorBlock = null;
-    }
-
-    // update tracking variables
-    lastUrl = currentUrl;
-    lastPath = currentPath;
-
-    // ensure main loop is running if we're on a valid page
-    if (isInitialized && canHaveVideoPlayer() && !isAnimationRunning) {
-      startMainLoop();
-    }
-  }
-}
-
-// enhanced page load handling
-function handlePageLoad() {
-  console.log('YouTube Remaining Time: Page load detected');
-
-  // initialize if not already done
-  if (!isInitialized) {
-    initializeExtension();
-  } else if (canHaveVideoPlayer() && !isAnimationRunning) {
-    startMainLoop();
-  }
-}
-
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', handlePageLoad);
-  document.addEventListener('load', handlePageLoad);
+if (document.readyState === "complete") {
+  animationLoop();
 } else {
-  setTimeout(handlePageLoad, 100);
+  window.addEventListener("load", animationLoop);
 }
 
-setInterval(handleNavigation, 500);
-
-// listen for storage changes
 browser.storage.onChanged.addListener((changes, area) => {
   if (area === 'local') {
     let updated = false;
@@ -473,15 +362,3 @@ browser.storage.onChanged.addListener((changes, area) => {
     }
   }
 });
-
-// cleanup on page unload
-window.addEventListener('beforeunload', () => {
-  stopMainLoop();
-});
-
-setTimeout(() => {
-  if (!isInitialized) {
-    console.log('YouTube Remaining Time: Force initializing after delay');
-    initializeExtension();
-  }
-}, 2000);
