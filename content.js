@@ -75,7 +75,6 @@ browser.storage.local.get([
 });
 
 let sponsorBlock = null;
-
 class SponsorBlock {
   constructor() {
     this.durationOffset = 0;
@@ -286,21 +285,14 @@ function updateCustomTimeLabel() {
   }
 }
 
-function animationLoop() {
+setInterval(function() {
   if (location.pathname.startsWith("/watch")) {
     if (!document.querySelector("#movie_player .customTimeContainer")) {
       createCustomTimeDisplay();
     }
     updateCustomTimeLabel();
   }
-  window.requestAnimationFrame(animationLoop);
-}
-
-if (document.readyState === "complete") {
-  animationLoop();
-} else {
-  window.addEventListener("load", animationLoop);
-}
+}, 1000);
 
 browser.storage.onChanged.addListener((changes, area) => {
   if (area === 'local') {
