@@ -165,18 +165,22 @@
       text-align: center;
     }
 
-    .status {
-      text-align: center;
-      font-size: 0.9rem;
-      color: Highlight;
-      margin-top: 10px;
-      height: 20px;
-      opacity: 0;
-      transition: opacity 0.3s ease;
+    .progressBarSettings.disabled .progressBarLeft .variant-item,
+    .progressBarSettings.disabled .progressBarMiddle,
+    .progressBarSettings.disabled .progressBarRight,
+    .progressBarSettings.disabled #totalSegmentsValue {
+      opacity: 0.4;
+      pointer-events: none;
     }
 
-    .status.show {
-      opacity: 1;
+    .progressBarSettings.disabled .progressBarLeft .variant-item input,
+    .progressBarSettings.disabled .progressBarMiddle input,
+    .progressBarSettings.disabled .progressBarRight input,
+    .progressBarSettings.disabled .progressBarLeft .variant-item label,
+    .progressBarSettings.disabled .progressBarMiddle label,
+    .progressBarSettings.disabled .progressBarRight label,
+    .progressBarSettings.disabled #totalSegmentsValue {
+      cursor: not-allowed;
     }
 
     /* DARK MODE */
@@ -326,7 +330,6 @@
       </div>
     </div>
 
-    <div class="status" id="status">Status Message Here</div>
     <div class="info">
       Changes are saved automatically and will take effect immediately.
     </div>

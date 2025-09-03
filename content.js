@@ -285,14 +285,53 @@ function updateCustomTimeLabel() {
   }
 }
 
-setInterval(function() {
-  if (location.pathname.startsWith("/watch")) {
-    if (!document.querySelector("#movie_player .customTimeContainer")) {
+let isWatchPage = false;
+let updateInterval = null;
+
+function handleNavigationChange() {
+  const newIsWatchPage = location.pathname.startsWith("/watch");
+
+  if (newIsWatchPage && !isWatchPage) {
+    isWatchPage = true;
+    setTimeout(() => {
       createCustomTimeDisplay();
-    }
-    updateCustomTimeLabel();
+      startUpdating();
+    }, 100);
+  } else if (!newIsWatchPage && isWatchPage) {
+    isWatchPage = false;
+    stopUpdating();
+    sponsorBlock = null;
   }
-}, 1000);
+}
+
+function startUpdating() {
+  if (updateInterval) return;
+  updateInterval = setInterval(() => {
+    if (isWatchPage) {
+      updateCustomTimeLabel();
+    }
+  }, 1000);
+}
+
+function stopUpdating() {
+  if (updateInterval) {
+    clearInterval(updateInterval);
+    updateInterval = null;
+  }
+}
+
+handleNavigationChange();
+
+let lastUrl = location.href;
+new MutationObserver(() => {
+  const url = location.href;
+  if (url !== lastUrl) {
+    lastUrl = url;
+    handleNavigationChange();
+  }
+}).observe(document, { subtree: true, childList: true });
+
+window.addEventListener('popstate', handleNavigationChange);
 
 browser.storage.onChanged.addListener((changes, area) => {
   if (area === 'local') {

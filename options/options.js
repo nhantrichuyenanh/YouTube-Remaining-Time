@@ -33,7 +33,6 @@ const elements = {
   progressBarSimple: document.getElementById('progressBarSimple'),
   progressBarGradient: document.getElementById('progressBarGradient'),
   progressBarNonTrailing: document.getElementById('progressBarNonTrailing'),
-  status: document.getElementById('status')
 };
 
 function ensureOneDisplayModeEnabled(checkbox) {
@@ -46,7 +45,6 @@ function ensureOneDisplayModeEnabled(checkbox) {
     elements.modeProgressBar
   ].filter(cb => cb.checked).length;
   if (enabledCount < 1) {
-    showStatus('At least one time format must be enabled!', true);
     checkbox.checked = true;
     return false;
   }
@@ -80,11 +78,7 @@ function saveOptions() {
     progressBarNonTrailing: elements.progressBarNonTrailing.checked,
     progressBarGradient: elements.progressBarGradient.checked
   };
-  browser.storage.local.set(options).then(() => {
-    showStatus('Options saved!');
-  }, (error) => {
-    showStatus('Error saving options: ' + error, true);
-  });
+  browser.storage.local.set(options);
 }
 
 function loadOptions() {
@@ -116,6 +110,8 @@ function loadOptions() {
       elements.progressBarSimple.checked = true;
     }
 
+    updateProgressBarState();
+
     const anyModeEnabled = options.allowedModes.endsAt24h ||
                            options.allowedModes.endsAt12h ||
                            options.allowedModes.endsIn ||
@@ -131,8 +127,8 @@ function loadOptions() {
 }
 
 function enforceSingleVariant(changedElement) {
-  if (!elements.progressBarSimple.checked && 
-      !elements.progressBarGradient.checked && 
+  if (!elements.progressBarSimple.checked &&
+      !elements.progressBarGradient.checked &&
       !elements.progressBarNonTrailing.checked) {
     changedElement.checked = true;
   } else {
@@ -152,14 +148,15 @@ function enforceSingleVariant(changedElement) {
   saveOptions();
 }
 
-function showStatus(message, isError = false) {
-  const status = elements.status;
-  status.textContent = message;
-  status.style.color = isError ? '#F44336' : '';
-  status.classList.add('show');
-  setTimeout(() => {
-    status.classList.remove('show');
-  }, 2000);
+function updateProgressBarState() {
+  const progressBarSettings = document.querySelector('.progressBarSettings');
+  const isProgressBarEnabled = elements.modeProgressBar.checked;
+
+  if (isProgressBarEnabled) {
+    progressBarSettings.classList.remove('disabled');
+  } else {
+    progressBarSettings.classList.add('disabled');
+  }
 }
 
 document.addEventListener('DOMContentLoaded', loadOptions);
@@ -177,7 +174,10 @@ elements.modeProgress.addEventListener('change', function() {
   if (ensureOneDisplayModeEnabled(this)) saveOptions();
 });
 elements.modeProgressBar.addEventListener('change', function() {
-  if (ensureOneDisplayModeEnabled(this)) saveOptions();
+  if (ensureOneDisplayModeEnabled(this)) {
+    updateProgressBarState();
+    saveOptions();
+  }
 });
 
 elements.progressBarSimple.addEventListener('change', function() {
