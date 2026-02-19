@@ -14,24 +14,17 @@
       display: flex;
       align-items: flex-start;
       justify-content: center;
-      padding-top: 20px;
       margin: 0;
     }
 
     .container {
-      background: #f9f9f9;
-      border: 1px solid rgba(128, 128, 128, 0.2);
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      background: transparent;
+      border: none;
+      border-radius: 0;
+      box-shadow: none;
       padding: 20px;
       width: 90%;
       max-width: 600px;
-    }
-
-    h1 {
-      margin: 0 0 16px 0;
-      font-size: 1.2rem;
-      text-align: center;
     }
 
     .options-layout {
@@ -42,7 +35,7 @@
     }
 
     .option-group {
-      background: rgba(0, 0, 0, 0.02);
+      background: #f9f9fb;
       border-radius: 6px;
       padding: 12px;
     }
@@ -62,8 +55,8 @@
     }
 
     .round-border-group {
-      border: 1.5px solid rgba(0, 0, 0, 0.2);
-      border-radius: 12px;
+      border: 1px solid rgba(0, 0, 0, 0.2);
+      border-radius: 6px;
       padding: 10px 12px;
       margin-bottom: 12px;
     }
@@ -108,7 +101,7 @@
 
     .progressBarSettings {
       border: 1px solid rgba(0, 0, 0, 0.15);
-      border-radius: 8px;
+      border-radius: 6px;
       padding: 8px;
       margin-top: 12px;
     }
@@ -156,13 +149,8 @@
       height: 20px;
       padding: 4px;
       text-align: center;
-    }
-
-    .info {
-      font-size: 0.8rem;
-      color: #666;
-      margin-top: 16px;
-      text-align: center;
+      border: 1px solid rgba(0, 0, 0, 0.2);
+      border-radius: 6px;
     }
 
     .progressBarSettings.disabled .progressBarLeft .variant-item,
@@ -190,13 +178,8 @@
         color: #fbfbfe;
       }
 
-      .container {
-        background: #1c1b22;
-        border: 0.5px solid #4e4d54;
-      }
-
       .option-group {
-        background: rgba(255, 255, 255, 0.03);
+        background: #1c1b22;
       }
 
       .round-border-group,
@@ -214,13 +197,18 @@
       .round-border-title {
         color: #bbb;
       }
+
+      .progressBarRight .symbol-row input[type="text"] {
+        background: #2b2a33;
+        color: #fbfbfe;
+        border: 1px solid #4e4d54;
+      }
     }
   </style>
 </head>
 
 <body>
   <div class="container">
-    <h1>Display Options</h1>
     <div class="options-layout">
       <!-- Time Format -->
       <div class="option-group">
@@ -330,7 +318,7 @@
       </div>
     </div>
 
-    <div class="info">
+    <div class="label" style="font-size: 0.8rem; margin-top: 16px; text-align: center;">
       Changes are saved automatically and will take effect immediately.
     </div>
   </div>

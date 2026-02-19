@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "version": "1.1.4",
+  "version": "1.1.5",
   "name": "YouTube Remaining Time",
   "description": "Does what it says on the tin, with SponsorBlock supported, playback rate adjusted and multiple time formats available.",
   "author": "Nhân Trí",
@@ -13,7 +13,7 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://www.youtube.com/watch*"],
+      "matches": ["https://www.youtube.com/*"],
       "js": ["content.js"],
       "run_at": "document_end"
     }
@@ -30,7 +30,8 @@
   "browser_specific_settings": {
     "gecko": {
       "id": "{3f51429e-c07e-4929-9fd8-b642001fbd41}",
-      "strict_min_version": "109.0"
+      "strict_min_version": "140.0",
+      "data_collection_permissions": {"required": ["none"]}
     }
   }
 }

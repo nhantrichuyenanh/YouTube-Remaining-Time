@@ -77,25 +77,20 @@ browser.storage.local.get([
 let sponsorBlock = null;
 class SponsorBlock {
   constructor() {
-    this.durationOffset = 0;
+    this.segments = [];
     this.isReady = false;
     this.initialize();
   }
 
   async initialize() {
-    const player = getPlayer();
+    const player = document.getElementById('movie_player');
     if (!player || !player.getVideoData) return;
     try {
       const videoID = player.getVideoData().video_id;
       const url = `https://sponsor.ajay.app/api/skipSegments/?videoID=${videoID}`;
       const response = await fetch(url);
       const data = await response.json();
-      let totalSponsorDuration = 0;
-      data.forEach(segment => {
-        const [start, end] = segment.segment;
-        totalSponsorDuration += (end - start);
-      });
-      this.durationOffset = totalSponsorDuration;
+      this.segments = data.map(s => ({ start: s.segment[0], end: s.segment[1] }));
       this.isReady = true;
     } catch (error) {
       console.error("SponsorBlock error:", error);
@@ -103,17 +98,19 @@ class SponsorBlock {
     }
   }
 
-  getAdjustedDuration(originalDuration) {
-    if (this.isReady) {
-      return originalDuration - this.durationOffset;
+  getRemainingSkippedDuration(currentTime) {
+    if (!this.isReady) return 0;
+    let skipped = 0;
+    for (const seg of this.segments) {
+      if (seg.end <= currentTime) continue; // already passed
+      if (seg.start >= currentTime) {
+        skipped += seg.end - seg.start; // entirely ahead
+      } else {
+        skipped += seg.end - currentTime; // currently inside segment
+      }
     }
-    return originalDuration;
+    return skipped;
   }
-}
-
-function getPlayer() {
-  return document.getElementById('movie_player')?.wrappedJSObject ||
-         document.getElementById('movie_player');
 }
 
 function getAllowedModes() {
@@ -152,22 +149,19 @@ function createCustomTimeDisplay() {
   if (existingContainer) return;
 
   const baseTimeDisplay = document.querySelector("#movie_player .ytp-time-display");
-  if (!baseTimeDisplay) return; // exit if no time display exists
+  baseTimeDisplay.addEventListener("click", e => e.stopImmediatePropagation(), true);
+  if (!baseTimeDisplay) return;
 
-  const customContainer = baseTimeDisplay.cloneNode(false);
-  customContainer.classList.remove("ytp-live");
-  customContainer.classList.add("customTimeContainer");
-  customContainer.style.paddingLeft = "0";
-  customContainer.style.cursor = "pointer";
-
-  const separatorElement = document.createElement("span");
-  separatorElement.textContent = "•";
-  separatorElement.classList.add("ytp-chapter-title-prefix");
-  customContainer.appendChild(separatorElement);
-
-  const timeLabel = document.createElement("span");
-  timeLabel.classList.add("customTimeLabel", "ytp-time-duration");
-  customContainer.appendChild(timeLabel);
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = `
+    <div class="ytp-time-display notranslate customTimeContainer" style="padding-left: 0; cursor: pointer;">
+      <span class="ytp-time-wrapper">
+        <div class="ytp-time-contents">
+          <span class="ytp-time-duration customTimeLabel"></span>
+        </div>
+      </span>
+    </div>`;
+  const customContainer = wrapper.firstElementChild;
 
   customContainer.addEventListener("click", cycleDisplayMode);
   baseTimeDisplay.parentNode.insertBefore(customContainer, baseTimeDisplay.nextSibling);
@@ -195,8 +189,6 @@ function updateCustomTimeLabel() {
   const baseTimeDisplay = document.querySelector("#movie_player .ytp-time-display");
   if (baseTimeDisplay && baseTimeDisplay.classList.contains("ytp-live")) {
     customLabel.textContent = "";
-    const separator = customLabel.parentNode.querySelector('.ytp-chapter-title-prefix');
-    if (separator) separator.textContent = "";
     return;
   }
 
@@ -207,13 +199,21 @@ function updateCustomTimeLabel() {
     sponsorBlock = new SponsorBlock();
   }
 
-  let effectiveDuration = duration;
+   const rawRemainingTime = duration - currentTime;
+
+  let sponsorRemainingTime = 0;
   if (state.options.sbEnabled && sponsorBlock && sponsorBlock.isReady) {
-    effectiveDuration = sponsorBlock.getAdjustedDuration(duration);
+    sponsorRemainingTime = sponsorBlock.getRemainingSkippedDuration(currentTime);
   }
 
-  const adjustedRemainingTime = (effectiveDuration - currentTime) / (state.options.pbrEnabled ? playbackRate : 1);
+  const effectiveRemainingTime = Math.max(0, rawRemainingTime - sponsorRemainingTime);
+  const adjustedRemainingTime = effectiveRemainingTime / (state.options.pbrEnabled ? playbackRate : 1);
   const estimatedEndDate = new Date(Date.now() + adjustedRemainingTime * 1000);
+
+  const totalSkipped = state.options.sbEnabled && sponsorBlock && sponsorBlock.isReady
+    ? sponsorBlock.segments.reduce((sum, s) => sum + (s.end - s.start), 0)
+    : 0;
+  const effectiveDuration = Math.max(currentTime, duration - totalSkipped);
 
   switch (currentDisplayMode) {
     case TIME_MODES.ENDS_AT_24: {
@@ -248,7 +248,7 @@ function updateCustomTimeLabel() {
         const passedSegments = Math.floor((currentTime / effectiveDuration) * segmentsForMarker);
         const remainingSegments = segmentsForMarker - passedSegments;
         const leftPart = state.options.progressBarRemaining.repeat(passedSegments);
-        const marker = state.options.progressBarPassed; // marker symbol
+        const marker = state.options.progressBarPassed;
         const rightPart = state.options.progressBarRemaining.repeat(remainingSegments);
         customLabel.textContent = leftPart + marker + rightPart;
       } else if(state.options.progressBarVariant === "gradient"){
@@ -288,19 +288,36 @@ function updateCustomTimeLabel() {
 let isWatchPage = false;
 let updateInterval = null;
 
+function waitForPlayer(callback, timeout = 10000) {
+  const start = Date.now();
+  const interval = setInterval(() => {
+    const timeDisplay = document.querySelector("#movie_player .ytp-time-display");
+    if (timeDisplay) {
+      clearInterval(interval);
+      callback();
+    } else if (Date.now() - start > timeout) {
+      clearInterval(interval);
+      console.warn("YRT: Timed out waiting for player.");
+    }
+  }, 300);
+}
+
 function handleNavigationChange() {
   const newIsWatchPage = location.pathname.startsWith("/watch");
 
   if (newIsWatchPage && !isWatchPage) {
     isWatchPage = true;
-    setTimeout(() => {
+    sponsorBlock = null;
+    waitForPlayer(() => {
       createCustomTimeDisplay();
       startUpdating();
-    }, 100);
+    });
   } else if (!newIsWatchPage && isWatchPage) {
     isWatchPage = false;
     stopUpdating();
     sponsorBlock = null;
+    const existing = document.querySelector("#movie_player .customTimeContainer");
+    if (existing) existing.remove();
   }
 }
 
