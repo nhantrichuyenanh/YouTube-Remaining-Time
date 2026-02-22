@@ -1,37 +1,34 @@
 {
-  "manifest_version": 3,
-  "version": "1.1.5",
-  "name": "YouTube Remaining Time",
-  "description": "Does what it says on the tin, with SponsorBlock supported, playback rate adjusted and multiple time formats available.",
-  "author": "Nhân Trí",
-  "homepage_url": "https://github.com/nhantrichuyenanh/YouTube-Remaining-Time",
-  "icons": {
-    "16": "icons/icon16.png",
-    "48": "icons/icon48.png",
-    "96": "icons/icon96.png",
-    "128": "icons/icon128.png"
-  },
-  "content_scripts": [
-    {
-      "matches": ["https://www.youtube.com/*"],
-      "js": ["content.js"],
-      "run_at": "document_end"
-    }
-  ],
-  "permissions": ["storage"],
-  "host_permissions": [
-    "https://www.youtube.com/watch*",
-    "https://sponsor.ajay.app/api/*"
-  ],
-  "options_ui": {
-    "page": "options/options.html",
-    "open_in_tab": false
-  },
-  "browser_specific_settings": {
-    "gecko": {
-      "id": "{3f51429e-c07e-4929-9fd8-b642001fbd41}",
-      "strict_min_version": "140.0",
-      "data_collection_permissions": {"required": ["none"]}
-    }
-  }
+  "manifest_version": 3,
+  "version": "1.1.6",
+  "name": "YouTube Remaining Time",
+  "description": "Does what it says on the tin, with SponsorBlock supported, playback rate adjusted and multiple time formats available.",
+  "author": "Nhân Trí",
+  "homepage_url": "https://github.com/nhantrichuyenanh/YouTube-Remaining-Time",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "96": "icons/icon96.png",
+    "128": "icons/icon128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.youtube.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_end"
+    }
+  ],
+  "permissions": ["storage"],
+  "host_permissions": ["https://sponsor.ajay.app/api/*"],
+  "options_ui": {
+    "page": "options/options.html",
+    "open_in_tab": false
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "{3f51429e-c07e-4929-9fd8-b642001fbd41}",
+      "strict_min_version": "140.0",
+      "data_collection_permissions": {"required": ["none"]}
+    }
+  }
 }
