@@ -187,7 +187,9 @@ function updateCustomTimeLabel() {
   if (!customLabel) return;
 
   const baseTimeDisplay = document.querySelector("#movie_player .ytp-time-display");
+
   if (baseTimeDisplay && baseTimeDisplay.classList.contains("ytp-live")) {
+    if (customContainer) customContainer.style.display = "none";
     customLabel.textContent = "";
     return;
   }
