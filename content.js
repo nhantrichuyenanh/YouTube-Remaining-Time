@@ -24,14 +24,15 @@ let state = {
     // simple (default/trailing) / nonTrailing / gradient
     progressBarVariant: "simple",
     progressBarNonTrailing: false,
-    progressBarGradient: false
+    progressBarGradient: false,
+    remainingShowMinus: false,
   }
 };
 
 browser.storage.local.get([
   'allowedModes', 'displayMode', 'pbrEnabled', 'sbEnabled', 'totalSegments',
   'progressBarRemaining', 'progressBarPassed', 'gradientSymbol',
-  'progressBarVariant', 'progressBarNonTrailing', 'progressBarGradient'
+  'progressBarVariant', 'progressBarNonTrailing', 'progressBarGradient', 'remainingShowMinus'
 ]).then(result => {
   if (result.allowedModes) {
     state.options.allowedModes = result.allowedModes;
@@ -44,6 +45,9 @@ browser.storage.local.get([
   }
   if (result.progressBarRemaining) {
     state.options.progressBarRemaining = result.progressBarRemaining;
+  }
+  if (result.remainingShowMinus !== undefined) {
+    state.options.remainingShowMinus = result.remainingShowMinus;
   }
   if (result.progressBarPassed) {
     state.options.progressBarPassed = result.progressBarPassed;
@@ -235,7 +239,8 @@ function updateCustomTimeLabel() {
       break;
     }
     case TIME_MODES.REMAINING: {
-      customLabel.textContent = formatRemainingTime(adjustedRemainingTime);
+      const prefix = state.options.remainingShowMinus ? '-' : '';
+      customLabel.textContent = prefix + formatRemainingTime(adjustedRemainingTime);
       break;
     }
     case TIME_MODES.PROGRESS: {
@@ -405,6 +410,10 @@ browser.storage.onChanged.addListener((changes, area) => {
     }
     if (changes.progressBarGradient !== undefined) {
       state.options.progressBarGradient = changes.progressBarGradient.newValue;
+      updated = true;
+    }
+    if (changes.remainingShowMinus !== undefined) {
+      state.options.remainingShowMinus = changes.remainingShowMinus.newValue;
       updated = true;
     }
     if (updated) {

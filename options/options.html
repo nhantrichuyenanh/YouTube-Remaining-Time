@@ -40,9 +40,10 @@
       padding: 12px;
     }
 
-    .option-title {
+    h3.option-title {
+      font-size: 1rem;
       font-weight: 600;
-      margin-bottom: 6px;
+      margin: 0 0 6px 0;
       text-align: center;
       padding-bottom: 6px;
     }
@@ -54,17 +55,18 @@
       margin-bottom: 12px;
     }
 
-    .round-border-group {
+    fieldset.round-border-group {
       border: 1px solid rgba(0, 0, 0, 0.2);
       border-radius: 6px;
       padding: 10px 12px;
-      margin-bottom: 12px;
+      margin: 0 0 12px 0;
     }
 
-    .round-border-title {
+    legend.round-border-title {
       font-size: 0.95rem;
       font-weight: 600;
-      margin: 0 0 6px 0;
+      padding: 0 4px;
+      margin-bottom: 6px;
     }
 
     .option-row {
@@ -182,7 +184,7 @@
         background: #1c1b22;
       }
 
-      .round-border-group,
+      fieldset.round-border-group,
       .progressBarSettings {
         border-color: #4e4d54;
       }
@@ -194,7 +196,7 @@
       .group-subtext,
       .option-subtext,
       .option-format,
-      .round-border-title {
+      legend.round-border-title {
         color: #bbb;
       }
 
@@ -211,8 +213,8 @@
   <div class="container">
     <div class="options-layout">
       <!-- Time Format -->
-      <div class="option-group">
-        <div class="option-title">Time Format</div>
+      <section class="option-group">
+        <h3 class="option-title">Time Format</h3>
         <p class="group-subtext">
           Checked time format(s) is(/are) made visible and unchecked one(s) invisible when clicking to shuffle it(/them)
           on a YouTube video.<br><br>
@@ -221,8 +223,8 @@
         </p>
 
         <!-- Ends At -->
-        <div class="round-border-group">
-          <div class="round-border-title">Ends At</div>
+        <fieldset class="round-border-group">
+          <legend class="round-border-title">Ends At</legend>
           <div class="option-row">
             <input type="checkbox" id="modeEndsAt24h">
             <label for="modeEndsAt24h">24-hour</label>
@@ -235,14 +237,16 @@
             <span class="option-format">hh:mm AM/PM</span>
             <span class="option-subtext">04:07 PM</span>
           </div>
-        </div>
+        </fieldset>
 
         <!-- Ends In -->
-        <div class="round-border-group">
-          <div class="round-border-title">Ends In</div>
+        <fieldset class="round-border-group">
+          <legend class="round-border-title">Ends In</legend>
           <div class="option-row">
             <input type="checkbox" id="modeEndsIn">
-            <label for="modeEndsIn">Remaining Time</label>
+            <label for="modeEndsIn" style="flex-grow: 0; margin-right: 8px;">Remaining Time</label>
+            <input type="checkbox" id="remainingShowMinus" style="margin-right: 4px;">
+            <label for="remainingShowMinus" style="flex-grow: 1;">Show minus sign</label>
             <span class="option-format">(hh:)mm:ss</span>
             <span class="option-subtext">7:26</span>
           </div>
@@ -288,42 +292,43 @@
               <div class="progressBarRight">
                 <div class="symbol-row">
                   <label for="progressBarPassed">Passed</label>
-                  <input type="text" id="progressBarPassed" maxlength="1" value="█" />
+                  <input type="text" id="progressBarPassed" value="█" />
                 </div>
                 <div class="symbol-row">
                   <label for="gradientSymbol">Gradient</label>
-                  <input type="text" id="gradientSymbol" maxlength="1" value="▒" />
+                  <input type="text" id="gradientSymbol" value="▒" />
                 </div>
                 <div class="symbol-row">
                   <label for="progressBarRemaining">Remaining</label>
-                  <input type="text" id="progressBarRemaining" maxlength="1" value="░" />
+                  <input type="text" id="progressBarRemaining" value="░" />
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      </div>
+        </fieldset>
+      </section>
 
       <!-- Time Calculation -->
-      <div class="option-group">
-        <div class="option-title">Time Calculation</div>
-        <div class="option-row">
-          <input type="checkbox" id="pbrEnabled">
-          <label for="pbrEnabled">Playback Rate</label>
+      <section class="option-group">
+        <h3 class="option-title">Time Calculation</h3>
+        <div class="option-row" style="justify-content: space-evenly;">
+          <div style="display: flex; align-items: center;">
+            <input type="checkbox" id="pbrEnabled">
+            <label for="pbrEnabled" style="flex-grow: 0;">Playback Rate</label>
+          </div>
+          <div style="display: flex; align-items: center;">
+            <input type="checkbox" id="sbEnabled">
+            <label for="sbEnabled" style="flex-grow: 0;">SponsorBlock Segments</label>
+          </div>
         </div>
-        <div class="option-row">
-          <input type="checkbox" id="sbEnabled">
-          <label for="sbEnabled">SponsorBlock Segments</label>
-        </div>
-      </div>
+      </section>
     </div>
 
-    <div class="label" style="font-size: 0.8rem; margin-top: 16px; text-align: center;">
+    <footer style="font-size: 0.8rem; margin-top: 16px; text-align: center;">
       Changes are saved automatically and will take effect immediately.
-    </div>
+    </footer>
   </div>
   <script src="options.js"></script>
 </body>
-
 
 </html>

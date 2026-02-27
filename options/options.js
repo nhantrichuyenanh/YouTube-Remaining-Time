@@ -14,7 +14,8 @@ const DEFAULT_OPTIONS = {
   gradientSymbol: "▒",
   progressBarVariant: "simple",
   progressBarNonTrailing: false,
-  progressBarGradient: false
+  progressBarGradient: false,
+  remainingShowMinus: false,
 };
 
 const elements = {
@@ -33,6 +34,7 @@ const elements = {
   progressBarSimple: document.getElementById('progressBarSimple'),
   progressBarGradient: document.getElementById('progressBarGradient'),
   progressBarNonTrailing: document.getElementById('progressBarNonTrailing'),
+  remainingShowMinus: document.getElementById('remainingShowMinus'),
 };
 
 function ensureOneDisplayModeEnabled(checkbox) {
@@ -76,7 +78,8 @@ function saveOptions() {
     gradientSymbol: elements.gradientSymbol.value,
     progressBarVariant: variant,
     progressBarNonTrailing: elements.progressBarNonTrailing.checked,
-    progressBarGradient: elements.progressBarGradient.checked
+    progressBarGradient: elements.progressBarGradient.checked,
+    remainingShowMinus: elements.remainingShowMinus.checked,
   };
   browser.storage.local.set(options);
 }
@@ -90,6 +93,8 @@ function loadOptions() {
     elements.modeProgressBar.checked = options.allowedModes.progressBar;
     elements.pbrEnabled.checked = options.pbrEnabled;
     elements.sbEnabled.checked = options.sbEnabled;
+    elements.remainingShowMinus.checked = options.remainingShowMinus;
+    updateRemainingSignState();
     elements.totalSegments.value = options.totalSegments;
     elements.totalSegmentsValue.textContent = options.totalSegments;
     elements.progressBarRemaining.value = options.progressBarRemaining;
@@ -159,6 +164,20 @@ function updateProgressBarState() {
   }
 }
 
+function updateRemainingSignState() {
+  const isEnabled = elements.modeEndsIn.checked;
+  elements.remainingShowMinus.style.opacity = isEnabled ? '1' : '0.4';
+  elements.remainingShowMinus.style.pointerEvents = isEnabled ? 'auto' : 'none';
+  const label = document.querySelector('label[for="remainingShowMinus"]');
+  label.style.opacity = isEnabled ? '1' : '0.4';
+  label.style.pointerEvents = isEnabled ? 'auto' : 'none';
+}
+
+function enforceMinLimitOfOne(input) {
+  const graphemes = [...new Intl.Segmenter().segment(input.value)].map(s => s.segment);
+  if (graphemes.length > 1) { input.value = graphemes[0]; }
+}
+
 document.addEventListener('DOMContentLoaded', loadOptions);
 
 elements.modeEndsAt24h.addEventListener('change', function() {
@@ -168,7 +187,10 @@ elements.modeEndsAt12h.addEventListener('change', function() {
   if (ensureOneDisplayModeEnabled(this)) saveOptions();
 });
 elements.modeEndsIn.addEventListener('change', function() {
-  if (ensureOneDisplayModeEnabled(this)) saveOptions();
+  if (ensureOneDisplayModeEnabled(this)) {
+    updateRemainingSignState();
+    saveOptions();
+  }
 });
 elements.modeProgress.addEventListener('change', function() {
   if (ensureOneDisplayModeEnabled(this)) saveOptions();
@@ -193,8 +215,12 @@ elements.progressBarNonTrailing.addEventListener('change', function() {
 elements.pbrEnabled.addEventListener('change', saveOptions);
 elements.sbEnabled.addEventListener('change', saveOptions);
 elements.progressBarRemaining.addEventListener('change', saveOptions);
+elements.remainingShowMinus.addEventListener('change', saveOptions);
 elements.progressBarPassed.addEventListener('change', saveOptions);
 elements.gradientSymbol.addEventListener('change', saveOptions);
+elements.progressBarRemaining.addEventListener('input', function() { enforceMinLimitOfOne(this); saveOptions(); });
+elements.progressBarPassed.addEventListener('input', function() { enforceMinLimitOfOne(this); saveOptions(); });
+elements.gradientSymbol.addEventListener('input', function() { enforceMinLimitOfOne(this); saveOptions(); });
 elements.totalSegments.addEventListener('input', function() {
   elements.totalSegmentsValue.textContent = elements.totalSegments.value;
   saveOptions();
